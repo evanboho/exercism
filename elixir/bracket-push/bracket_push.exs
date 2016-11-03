@@ -5,60 +5,42 @@ defmodule BracketPush do
   @spec check_brackets(String.t) :: boolean
   def check_brackets("") do true end
   def check_brackets(str) do
-    map = check(String.split(str, ""), %{"{" => 0, "[" => 0, "(" => 0})
-    check_map(map)
-    # Enum.all?(Map.values(map), fn x -> x == 0 end)
+    check(String.split(str, ""), []) == []
   end
 
-  defp check_map(false) do false end
-  defp check_map(map) do
-    Enum.all?(Map.values(map), fn x -> x == 0 end)
-  end
-
+  defp check([], acc) do acc end
+  defp check(_, false) do false end
   defp check([head | tail], acc) do
-    case head do
-      "{" ->
-        acc = []
-      "[" ->
-        acc = Map.put(acc, "[", acc["["] + 1)
-      "(" ->
-        acc = Map.put(acc, "(", acc["("] + 1)
-      "}" ->
-        acc = Map.put(acc, "{", acc["{"] - 1)
-      "]" ->
-        acc = Map.put(acc, "[", acc["["] - 1)
-      ")" ->
-        acc = Map.put(acc, "(", acc["("] - 1)
-      _ -> true
-    end
+    acc =
+      case head do
+        "{" -> open_parens("{", acc)
+        "[" -> open_parens("[", acc)
+        "(" -> open_parens("(", acc)
+        "}" -> close_parens("{", acc)
+        "]" -> close_parens("[", acc)
+        ")" -> close_parens("(", acc)
+        _ -> acc
+      end
+    check(tail, acc)
   end
 
-  # defp check([], acc) do acc end
-  # defp check(_, false) do false end
-  # defp check([head | tail], acc) do
-  #   case head do
-  #     "{" ->
-  #       acc = Map.put(acc, "{", acc["{"] + 1)
-  #     "[" ->
-  #       acc = Map.put(acc, "[", acc["["] + 1)
-  #     "(" ->
-  #       acc = Map.put(acc, "(", acc["("] + 1)
-  #     "}" ->
-  #       acc = Map.put(acc, "{", acc["{"] - 1)
-  #     "]" ->
-  #       acc = Map.put(acc, "[", acc["["] - 1)
-  #     ")" ->
-  #       acc = Map.put(acc, "(", acc["("] - 1)
-  #     _ -> true
-  #   end
-  #   if (Enum.any?(Map.values(acc), fn x -> x < 0 end)) do
-  #     acc = false
-  #   end
-  #   check(tail, acc)
-  #   # if length(tail) > 0 do
-  #   #   check(tail, acc)
-  #   # else
-  #   #   acc
-  #   # end
-  # end
+  def open_parens(sym, []) do [{ sym, 1 }] end
+  def open_parens(sym, [{ acc_sym, acc_n } | tail_acc]) when sym == acc_sym do
+    [{ acc_sym, acc_n + 1 } | tail_acc]
+  end
+  def open_parens(sym, acc) do
+    [{ sym, 1 } | acc]
+  end
+
+  defp close_parens(sym, [{ acc_sym, acc_n } | tail_acc]) when sym == acc_sym and acc_n == 1 do
+    tail_acc
+  end
+  defp close_parens(sym, [{ acc_sym, acc_n } | tail_acc]) when sym == acc_sym do
+    [{ acc_sym, acc_n - 1 } | tail_acc]
+  end
+  defp close_parens(sym, [{ acc_sym, acc_n }]) when sym == acc_sym do
+    []
+  end
+  defp close_parens(sym, _) do false end
+
 end
